@@ -1,0 +1,2130 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calculadora de Precios - Sublimación Pro</title>
+<script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+<style>
+  :root {
+    --primary: #6366f1;
+    --primary-dark: #4f46e5;
+    --primary-light: #a5b4fc;
+    --secondary: #ec4899;
+    --success: #10b981;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+    --dark: #1e293b;
+    --gray: #64748b;
+    --light-gray: #f1f5f9;
+    --white: #ffffff;
+    --border: #e2e8f0;
+    --shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+    --shadow-lg: 0 10px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
+    --radius: 12px;
+    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    color: var(--dark);
+    padding: 20px;
+  }
+
+  .container { max-width: 1400px; margin: 0 auto; }
+
+  .header {
+    background: var(--white);
+    border-radius: var(--radius);
+    padding: 25px 35px;
+    box-shadow: var(--shadow-lg);
+    margin-bottom: 25px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 15px;
+  }
+
+  .header h1 {
+    font-size: 1.8rem;
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .header-icon { font-size: 2rem; }
+  .header-subtitle { color: var(--gray); font-size: 0.9rem; margin-top: 4px; }
+
+  .tabs {
+    display: flex; gap: 8px; background: var(--white);
+    padding: 8px; border-radius: var(--radius);
+    box-shadow: var(--shadow); margin-bottom: 25px; flex-wrap: wrap;
+  }
+
+  .tab {
+    flex: 1; min-width: 150px; padding: 12px 20px;
+    background: transparent; border: none; border-radius: 8px;
+    cursor: pointer; font-size: 0.95rem; font-weight: 600;
+    color: var(--gray); transition: var(--transition);
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+
+  .tab:hover { background: var(--light-gray); color: var(--dark); }
+  .tab.active {
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    color: var(--white); box-shadow: var(--shadow);
+  }
+
+  .tab-content { display: none; animation: fadeIn 0.4s ease; }
+  .tab-content.active { display: block; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .card {
+    background: var(--white); border-radius: var(--radius);
+    padding: 25px; box-shadow: var(--shadow); margin-bottom: 20px;
+  }
+
+  .card-title {
+    font-size: 1.2rem; color: var(--dark); margin-bottom: 20px;
+    display: flex; align-items: center; gap: 10px;
+    padding-bottom: 12px; border-bottom: 2px solid var(--light-gray);
+  }
+
+  .card-title .icon {
+    width: 36px; height: 36px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.2rem;
+  }
+
+  .icon-blue { background: #dbeafe; color: #2563eb; }
+  .icon-purple { background: #ede9fe; color: #7c3aed; }
+  .icon-pink { background: #fce7f3; color: #db2777; }
+  .icon-green { background: #d1fae5; color: #059669; }
+  .icon-orange { background: #fed7aa; color: #ea580c; }
+  .icon-teal { background: #ccfbf1; color: #0f766e; }
+
+  .grid { display: grid; gap: 15px; }
+  .grid-2 { grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); }
+  .grid-3 { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+  .grid-4 { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+
+  .form-group label {
+    font-size: 0.85rem; font-weight: 600; color: var(--gray);
+    text-transform: uppercase; letter-spacing: 0.5px;
+  }
+
+  .form-group input, .form-group select {
+    padding: 10px 14px; border: 2px solid var(--border);
+    border-radius: 8px; font-size: 0.95rem;
+    transition: var(--transition); background: var(--white);
+  }
+
+  .form-group input:focus, .form-group select:focus {
+    outline: none; border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+  }
+
+  .form-group input.highlight { background: #fef9c3; border-color: var(--warning); }
+
+  .materials-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+
+  .materials-table th {
+    background: var(--light-gray); padding: 12px; text-align: left;
+    font-size: 0.8rem; text-transform: uppercase; color: var(--gray);
+    font-weight: 700; letter-spacing: 0.5px;
+  }
+
+  .materials-table td { padding: 8px; border-bottom: 1px solid var(--border); }
+
+  .materials-table input, .materials-table select {
+    width: 100%; padding: 8px 10px; border: 2px solid var(--border);
+    border-radius: 6px; font-size: 0.9rem; transition: var(--transition);
+  }
+
+  .materials-table input:focus, .materials-table select:focus { 
+    outline: none; border-color: var(--primary); 
+  }
+
+  .materials-table .total-cell {
+    font-weight: 700; color: var(--primary-dark);
+    padding: 8px 12px; background: #eef2ff;
+    border-radius: 6px; text-align: right;
+  }
+
+  .btn {
+    padding: 10px 20px; border: none; border-radius: 8px;
+    font-size: 0.9rem; font-weight: 600; cursor: pointer;
+    transition: var(--transition); display: inline-flex;
+    align-items: center; gap: 8px;
+  }
+
+  .btn-primary { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: var(--white); }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 15px rgba(99, 102, 241, 0.3); }
+  .btn-success { background: linear-gradient(135deg, var(--success), #059669); color: var(--white); }
+  .btn-success:hover { transform: translateY(-2px); box-shadow: 0 8px 15px rgba(16, 185, 129, 0.3); }
+  .btn-danger { background: var(--danger); color: var(--white); padding: 6px 12px; font-size: 0.85rem; }
+  .btn-danger:hover { background: #dc2626; }
+  .btn-secondary { background: var(--light-gray); color: var(--dark); }
+  .btn-secondary:hover { background: var(--border); }
+  .btn-teal { background: linear-gradient(135deg, #14b8a6, #0d9488); color: var(--white); }
+  .btn-teal:hover { transform: translateY(-2px); box-shadow: 0 8px 15px rgba(20, 184, 166, 0.3); }
+  .btn-sm { padding: 6px 12px; font-size: 0.85rem; }
+
+  .result-box {
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    color: var(--white); padding: 20px; border-radius: var(--radius);
+    text-align: center; box-shadow: var(--shadow-lg);
+  }
+  .result-box.green { background: linear-gradient(135deg, #10b981, #059669); }
+  .result-box.pink { background: linear-gradient(135deg, #ec4899, #db2777); }
+  .result-box .label { font-size: 0.85rem; opacity: 0.9; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+  .result-box .value { font-size: 2rem; font-weight: 800; }
+  .result-box .sublabel { font-size: 0.8rem; opacity: 0.8; margin-top: 5px; }
+
+  .results-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-top: 20px; }
+
+  .info-box {
+    background: #eff6ff; border-left: 4px solid #3b82f6;
+    padding: 12px 16px; border-radius: 6px;
+    font-size: 0.9rem; color: #1e40af; margin-top: 15px;
+  }
+
+  .reference-table { width: 100%; margin-top: 15px; border-collapse: collapse; }
+  .reference-table td { padding: 10px 15px; border-bottom: 1px solid var(--border); }
+  .reference-table td:first-child { font-weight: 600; color: var(--dark); }
+  .reference-table td:last-child { text-align: right; color: var(--primary-dark); font-weight: 700; }
+
+  .data-table { width: 100%; border-collapse: collapse; margin-top: 15px; min-width: 1100px; }
+  .data-table th {
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    color: var(--white); padding: 14px 12px; text-align: left;
+    font-size: 0.85rem; text-transform: uppercase;
+    letter-spacing: 0.5px; font-weight: 700; white-space: nowrap;
+  }
+  .data-table th:first-child { border-top-left-radius: 8px; }
+  .data-table th:last-child { border-top-right-radius: 8px; }
+  .data-table td { padding: 12px; border-bottom: 1px solid var(--border); font-size: 0.9rem; vertical-align: middle; }
+  .data-table tr:hover { background: var(--light-gray); }
+  .data-table tr:last-child td { border-bottom: none; }
+  .data-table input, .data-table select {
+    width: 100%; padding: 8px 10px; border: 1px solid transparent;
+    border-radius: 6px; font-size: 0.9rem; background: transparent; transition: all 0.2s;
+  }
+  .data-table input:hover, .data-table input:focus { 
+    outline: none; border-color: var(--primary); background: white; 
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1);
+  }
+
+  .monthly-card {
+    background: var(--white); border-radius: var(--radius);
+    padding: 15px; box-shadow: var(--shadow);
+    transition: var(--transition); border-left: 4px solid var(--primary);
+  }
+  .monthly-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); }
+  .monthly-card.has-data { border-left-color: var(--success); }
+  .monthly-card .month-name { font-size: 1.1rem; font-weight: 700; color: var(--dark); margin-bottom: 10px; }
+  .monthly-card .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 0.85rem; }
+  .monthly-card .stat-item { display: flex; flex-direction: column; }
+  .monthly-card .stat-label { color: var(--gray); font-size: 0.75rem; text-transform: uppercase; }
+  .monthly-card .stat-value { font-weight: 700; color: var(--dark); }
+  .monthly-card .stat-value.positive { color: var(--success); }
+
+  .monthly-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 15px; }
+
+  .empty-state { text-align: center; padding: 40px 20px; color: var(--gray); }
+  .empty-state-icon { font-size: 3rem; margin-bottom: 15px; opacity: 0.5; }
+
+  .toolbar { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+
+  .notification {
+    position: fixed; top: 20px; right: 20px; background: var(--white);
+    padding: 15px 20px; border-radius: var(--radius); box-shadow: var(--shadow-lg);
+    display: flex; align-items: center; gap: 12px; z-index: 1000;
+    transform: translateX(400px); transition: transform 0.3s ease;
+    border-left: 4px solid var(--success);
+  }
+  .notification.show { transform: translateX(0); }
+  .notification.error { border-left-color: var(--danger); }
+
+  .delete-btn {
+    background: var(--danger); color: var(--white); border: none;
+    padding: 6px 10px; border-radius: 6px; cursor: pointer;
+    font-size: 0.85rem; transition: var(--transition);
+  }
+  .delete-btn:hover { background: #dc2626; }
+
+  .summary-total {
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    color: var(--white); padding: 20px; border-radius: var(--radius);
+    margin-bottom: 20px; display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px;
+  }
+  .summary-total .item { text-align: center; }
+  .summary-total .item-label { font-size: 0.8rem; opacity: 0.9; text-transform: uppercase; letter-spacing: 1px; }
+  .summary-total .item-value { font-size: 1.5rem; font-weight: 800; margin-top: 5px; }
+
+  @media (max-width: 768px) {
+    body { padding: 10px; }
+    .header { padding: 20px; }
+    .header h1 { font-size: 1.3rem; }
+    .card { padding: 18px; }
+    .result-box .value { font-size: 1.5rem; }
+    .materials-table { font-size: 0.85rem; }
+    .materials-table th, .materials-table td { padding: 6px; }
+  }
+
+  .scroll-table { overflow-x: auto; border-radius: var(--radius); box-shadow: var(--shadow); }
+  .profit-positive { color: var(--success); font-weight: 700; }
+  .profit-negative { color: var(--danger); font-weight: 700; }
+
+  .formula-box {
+    background: #fef3c7; border-left: 4px solid var(--warning);
+    padding: 12px 16px; border-radius: 6px;
+    font-family: 'Courier New', monospace; font-weight: 600;
+    color: #92400e; margin-top: 10px;
+  }
+
+  .invoice-items-section {
+    background: #f8fafc;
+    border: 2px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-top: 20px;
+  }
+
+  .invoice-items-section h3 {
+    color: var(--primary-dark);
+    margin-bottom: 15px;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .invoice-item-row {
+    display: grid;
+    grid-template-columns: 2.5fr 80px 1fr 1fr 1fr auto;
+    gap: 10px;
+    margin-bottom: 10px;
+    align-items: end;
+    padding: 10px;
+    background: white;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    transition: all 0.2s;
+  }
+
+  .invoice-item-row:hover {
+    border-color: var(--primary-light);
+    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.1);
+  }
+
+  .invoice-item-row .form-group {
+    margin-bottom: 0;
+  }
+
+  .invoice-item-row .form-group label {
+    font-size: 0.75rem;
+  }
+
+  .freight-section {
+    background: #fef3c7;
+    border: 2px dashed var(--warning);
+    padding: 15px;
+    border-radius: 8px;
+    margin-top: 15px;
+  }
+
+  .freight-section h4 {
+    color: #92400e;
+    margin-bottom: 10px;
+    font-size: 1rem;
+  }
+
+  .freight-calculation {
+    background: white;
+    padding: 12px;
+    border-radius: 6px;
+    margin-top: 10px;
+    font-size: 0.9rem;
+  }
+
+  .freight-calculation .row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 5px;
+  }
+
+  .freight-calculation .row.total {
+    font-weight: 700;
+    color: var(--primary-dark);
+    border-top: 2px solid var(--border);
+    padding-top: 8px;
+    margin-top: 8px;
+    font-size: 1.1rem;
+  }
+
+  .invoice-summary {
+    background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+    padding: 15px;
+    border-radius: 8px;
+    margin-top: 15px;
+  }
+
+  .invoice-summary .total-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--primary-dark);
+  }
+
+  .unit-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    background: #e0e7ff;
+    color: #3730a3;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-left: 5px;
+  }
+
+  .price-hint {
+    font-size: 0.75rem;
+    color: var(--gray);
+    margin-top: 3px;
+    font-style: italic;
+  }
+
+  .material-select-highlight {
+    background: #f0fdf4 !important;
+    border-color: var(--success) !important;
+  }
+
+  .new-material-input {
+    border-color: var(--warning) !important;
+    background: #fffbeb !important;
+  }
+
+  /* MODAL DE SELECCIÓN DE MATERIALES */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 2000;
+    justify-content: center;
+    align-items: center;
+    animation: fadeIn 0.3s ease;
+  }
+
+  .modal-overlay.active {
+    display: flex;
+  }
+
+  .modal-content {
+    background: var(--white);
+    border-radius: var(--radius);
+    padding: 30px;
+    max-width: 800px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: var(--shadow-lg);
+    animation: slideIn 0.3s ease;
+  }
+
+  @keyframes slideIn {
+    from { transform: translateY(-50px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid var(--light-gray);
+  }
+
+  .modal-header h2 {
+    font-size: 1.5rem;
+    color: var(--primary-dark);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .modal-close {
+    background: var(--light-gray);
+    border: none;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 1.2rem;
+    transition: var(--transition);
+  }
+
+  .modal-close:hover {
+    background: var(--danger);
+    color: white;
+  }
+
+  .material-selection-list {
+    display: grid;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  .material-selection-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px;
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: var(--transition);
+  }
+
+  .material-selection-item:hover {
+    border-color: var(--primary);
+    background: #f0f9ff;
+  }
+
+  .material-selection-item.selected {
+    border-color: var(--success);
+    background: #f0fdf4;
+  }
+
+  .material-selection-item input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+  }
+
+  .material-selection-item .material-info {
+    flex: 1;
+  }
+
+  .material-selection-item .material-name {
+    font-weight: 600;
+    color: var(--dark);
+    margin-bottom: 4px;
+  }
+
+  .material-selection-item .material-details {
+    font-size: 0.85rem;
+    color: var(--gray);
+  }
+
+  .material-selection-item .material-price {
+    font-weight: 700;
+    color: var(--primary-dark);
+    font-size: 1.1rem;
+  }
+
+  .modal-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 2px solid var(--light-gray);
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  
+  <div class="header">
+    <div>
+      <h1><span class="header-icon"></span>Calculadora de Precios - Sublimación</h1>
+      <div class="header-subtitle">Sistema profesional con gestión de facturas y fletes</div>
+    </div>
+    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+      <button class="btn btn-secondary" onclick="exportData()"> Exportar JSON</button>
+      <button class="btn btn-success" onclick="exportToExcel()">📊 Exportar Excel</button>
+      <button class="btn btn-secondary" onclick="importData()">📤 Importar</button>
+      <button class="btn btn-danger" onclick="resetAll()">️ Reiniciar</button>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('calculator', this)"><span></span> Calculadora</button>
+    <button class="tab" onclick="switchTab('invoices', this)"><span>🧾</span> Facturas y Compras</button>
+    <button class="tab" onclick="switchTab('materials', this)"><span>📦</span> Lista de Materiales</button>
+    <button class="tab" onclick="switchTab('registry', this)"><span>📋</span> Registro de Productos</button>
+    <button class="tab" onclick="switchTab('summary', this)"><span>📊</span> Resumen Mensual</button>
+  </div>
+
+  <!-- TAB 1: CALCULADORA -->
+  <div id="calculator" class="tab-content active">
+    
+    <div class="card">
+      <div class="card-title">
+        <div class="icon icon-blue">📦</div>
+        <div>
+          <div>1. Datos del Producto</div>
+          <small style="color: var(--gray); font-weight: normal;">Ingresa el nombre del producto a calcular</small>
+        </div>
+      </div>
+      <div class="grid grid-2">
+        <div class="form-group">
+          <label>Nombre del Producto</label>
+          <input type="text" id="productName" value="Taza personalizada" class="highlight" placeholder="Ej: Taza personalizada">
+        </div>
+        <div class="form-group">
+          <label>Cantidad a producir</label>
+          <input type="number" id="productQuantity" value="1" min="1" class="highlight">
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">
+        <div class="icon icon-purple">🧰</div>
+        <div>
+          <div>A. Materiales y Suministros</div>
+          <small style="color: var(--gray); font-weight: normal;">Selecciona de tu lista o agrega manualmente</small>
+        </div>
+      </div>
+      <div class="scroll-table">
+        <table class="materials-table">
+          <thead>
+            <tr>
+              <th style="width: 30%;">Concepto</th>
+              <th style="width: 12%;">UM</th>
+              <th style="width: 18%;">Costo Unitario (S/)</th>
+              <th style="width: 12%;">Cantidad</th>
+              <th style="width: 18%;">Total (S/)</th>
+              <th style="width: 10%;">Acción</th>
+            </tr>
+          </thead>
+          <tbody id="materialsBody"></tbody>
+        </table>
+      </div>
+      <div style="margin-top: 15px; display: flex; gap: 10px; flex-wrap: wrap;">
+        <button class="btn btn-primary" onclick="addMaterial()">➕ Agregar Material</button>
+        <button class="btn btn-teal" onclick="openMaterialSelector()">📋 Seleccionar de Lista</button>
+      </div>
+      <div style="margin-top: 20px; padding: 15px; background: #eef2ff; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+        <strong style="color: var(--primary-dark);">SUBTOTAL MATERIALES:</strong>
+        <strong style="font-size: 1.3rem; color: var(--primary-dark);" id="subtotalMaterials">S/ 0.00</strong>
+      </div>
+    </div>
+
+    <div class="grid grid-2">
+      <div class="card">
+        <div class="card-title">
+          <div class="icon icon-pink">👷</div>
+          <div>
+            <div>B. Mano de Obra</div>
+            <small style="color: var(--gray); font-weight: normal;">Calculado por tiempo de trabajo</small>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Valor por hora de trabajo (S/)</label>
+          <input type="number" id="hourlyRate" value="15.00" step="0.50" min="0" class="highlight">
+        </div>
+        <div class="form-group">
+          <label>Tiempo de trabajo (minutos)</label>
+          <input type="number" id="workTimeMinutes" value="10" step="1" min="0" class="highlight">
+        </div>
+        <div class="formula-box">
+          Fórmula: (S/ <span id="formulaHourly">15</span> × <span id="formulaMinutes">10</span>) / 60
+        </div>
+        <div style="margin-top: 10px; padding: 10px; background: #d1fae5; border-radius: 6px; text-align: center;">
+          <strong style="color: #065f46;">Mano de obra: S/ <span id="laborCostCalculated">2.50</span></strong>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          <div class="icon icon-orange">💼</div>
+          <div>
+            <div>C. Gastos Generales</div>
+            <small style="color: var(--gray); font-weight: normal;">Porcentaje sobre el subtotal de materiales</small>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Gastos generales (%)</label>
+          <input type="number" id="overheadPercent" value="10" step="0.1" min="0" max="100" class="highlight">
+        </div>
+        <div class="info-box">
+          💡 <strong>Referencia:</strong>
+          <table class="reference-table">
+            <tr><td>Pequeño negocio</td><td>8% – 12%</td></tr>
+            <tr><td>En crecimiento</td><td>12% – 18%</td></tr>
+            <tr><td>Establecido</td><td>18% – 25%</td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">
+        <div class="icon icon-green">💰</div>
+        <div>
+          <div>2. Costo Total y Precio de Venta</div>
+          <small style="color: var(--gray); font-weight: normal;">Cálculo automático basado en los datos ingresados</small>
+        </div>
+      </div>
+      
+      <div class="results-grid">
+        <div class="result-box">
+          <div class="label">Costo Total por Unidad</div>
+          <div class="value" id="totalCost">S/ 0.00</div>
+          <div class="sublabel">Incluye materiales, mano de obra y gastos</div>
+        </div>
+        <div class="result-box pink">
+          <div class="label">Gastos Generales</div>
+          <div class="value" id="overheadCost">S/ 0.00</div>
+          <div class="sublabel" id="overheadPercentDisplay">10% sobre materiales</div>
+        </div>
+      </div>
+
+      <div style="margin-top: 25px;">
+        <div class="card-title">
+          <div class="icon icon-green"></div>
+          <div>3. Precio y Ganancia</div>
+        </div>
+        <div class="grid grid-2">
+          <div class="form-group">
+            <label>Margen de ganancia deseado (%)</label>
+            <input type="number" id="profitMargin" value="30" step="1" min="0" max="500" class="highlight">
+          </div>
+        </div>
+      </div>
+
+      <div class="results-grid" style="margin-top: 20px;">
+        <div class="result-box green">
+          <div class="label">💵 Precio Sugerido de Venta</div>
+          <div class="value" id="suggestedPrice">S/ 0.00</div>
+          <div class="sublabel">Precio final recomendado</div>
+        </div>
+        <div class="result-box green">
+          <div class="label">📈 Ganancia por Unidad</div>
+          <div class="value" id="profitPerUnit">S/ 0.00</div>
+          <div class="sublabel" id="profitMarginDisplay">30% de margen</div>
+        </div>
+      </div>
+
+      <div style="margin-top: 20px; display: flex; gap: 10px; flex-wrap: wrap;">
+        <button class="btn btn-success" onclick="saveToRegistry()">💾 Guardar en Registro</button>
+        <button class="btn btn-secondary" onclick="clearCalculator()">🔄 Limpiar Calculadora</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 2: FACTURAS Y COMPRAS -->
+  <div id="invoices" class="tab-content">
+    <div class="card">
+      <div class="card-title">
+        <div class="icon icon-teal">🧾</div>
+        <div>
+          <div>Registro de Facturas y Compras</div>
+          <small style="color: var(--gray); font-weight: normal;">Selecciona materiales de tu lista y agrega flete</small>
+        </div>
+      </div>
+
+      <div class="grid grid-4" style="margin-bottom: 20px;">
+        <div class="form-group">
+          <label>Fecha de Compra</label>
+          <input type="date" id="invoiceDate">
+        </div>
+        <div class="form-group">
+          <label>Proveedor</label>
+          <input type="text" id="invoiceSupplier" placeholder="Ej: Mayorista ABC">
+        </div>
+        <div class="form-group">
+          <label>N° Factura/Boleta</label>
+          <input type="text" id="invoiceNumber" placeholder="Ej: F001-12345">
+        </div>
+        <div class="form-group">
+          <label>Flete/Envío Total (S/)</label>
+          <input type="number" id="invoiceFreight" min="0" value="0" step="0.01" placeholder="0 si es local">
+        </div>
+      </div>
+
+      <div class="invoice-items-section">
+        <h3>📦 Items de la Factura</h3>
+        <div id="invoiceItemsContainer"></div>
+        <button class="btn btn-secondary" onclick="addInvoiceItem()" style="margin-top: 10px;">
+           Agregar Item
+        </button>
+
+        <div class="freight-section" id="freightSection" style="display: none;">
+          <h4>📦 Cálculo de Flete Prorrateado</h4>
+          <div class="freight-calculation" id="freightCalculation"></div>
+        </div>
+
+        <div class="invoice-summary" id="invoiceSummary" style="display: none;">
+          <div class="total-row">
+            <span>Total Factura (con flete):</span>
+            <span id="invoiceTotalWithFreight">S/ 0.00</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top: 20px; display: flex; gap: 10px; flex-wrap: wrap;">
+        <button class="btn btn-primary" onclick="saveInvoice()">💾 Registrar Factura Completa</button>
+        <button class="btn btn-secondary" onclick="clearInvoiceForm()">🔄 Limpiar</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">
+        <div class="icon icon-blue">📊</div>
+        <div>
+          <div>Historial de Facturas</div>
+          <small style="color: var(--gray); font-weight: normal;">Todas tus facturas registradas</small>
+        </div>
+      </div>
+
+      <div class="scroll-table">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Proveedor</th>
+              <th>N° Factura</th>
+              <th>Items</th>
+              <th>Subtotal</th>
+              <th>Flete</th>
+              <th>Total</th>
+              <th>Acción</th>
+            </tr>
+          </thead>
+          <tbody id="invoiceBody"></tbody>
+        </table>
+      </div>
+
+      <div id="invoiceEmpty" class="empty-state" style="display: none;">
+        <div class="empty-state-icon">📭</div>
+        <h3>No hay facturas registradas</h3>
+        <p>Comienza agregando tu primera factura de compra</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 3: LISTA DE MATERIALES -->
+  <div id="materials" class="tab-content">
+    <div class="card">
+      <div class="card-title">
+        <div class="icon icon-purple">📦</div>
+        <div>
+          <div>Lista Maestra de Materiales</div>
+          <small style="color: var(--gray); font-weight: normal;">Gestiona los materiales que aparecerán en el dropdown de facturas</small>
+        </div>
+      </div>
+
+      <div class="info-box" style="margin-bottom: 20px;">
+        💡 <strong>Consejo:</strong> Los materiales que agregues aquí aparecerán automáticamente como opciones al crear una factura. 
+        El sistema calculará el precio promedio de cada uno según tus compras.
+      </div>
+
+      <div class="grid grid-3" style="margin-bottom: 20px;">
+        <div class="form-group">
+          <label>Nombre del Material</label>
+          <input type="text" id="newMaterialName" placeholder="Ej: Taza sublimable 11oz">
+        </div>
+        <div class="form-group">
+          <label>Unidad de Medida</label>
+          <select id="newMaterialUnit">
+            <option value="UND">UND - Unidad</option>
+            <option value="PZA">PZA - Pieza</option>
+            <option value="CAJ">CAJ - Caja</option>
+            <option value="PKG">PKG - Paquete</option>
+            <option value="M">M - Metro</option>
+            <option value="M2">M2 - Metro cuadrado</option>
+            <option value="L">L - Litro</option>
+            <option value="ML">ML - Mililitro</option>
+            <option value="KG">KG - Kilogramo</option>
+            <option value="GR">GR - Gramo</option>
+            <option value="ROLLO">ROLLO</option>
+            <option value="PLIEGO">PLIEGO</option>
+            <option value="JGO">JGO - Juego</option>
+            <option value="SET">SET</option>
+            <option value="OTRO">OTRO</option>
+          </select>
+        </div>
+        <div style="display: flex; align-items: flex-end;">
+          <button class="btn btn-primary" onclick="addNewMaterial()" style="width: 100%;">➕ Crear Material</button>
+        </div>
+      </div>
+
+      <div class="scroll-table">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Material</th>
+              <th style="text-align: center;">UM</th>
+              <th style="text-align: right;">Total Compras</th>
+              <th style="text-align: center;">Cantidad Total</th>
+              <th style="text-align: right;">Precio Promedio</th>
+              <th style="text-align: right;">Último Precio</th>
+              <th style="text-align: center;">N° Compras</th>
+              <th>Acción</th>
+            </tr>
+          </thead>
+          <tbody id="materialsListBody"></tbody>
+        </table>
+      </div>
+
+      <div id="materialsEmpty" class="empty-state" style="display: none;">
+        <div class="empty-state-icon">📦</div>
+        <h3>No hay materiales registrados</h3>
+        <p>Agrega materiales para usarlos en tus facturas</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 4: REGISTRO -->
+  <div id="registry" class="tab-content">
+    <div class="card">
+      <div class="card-title">
+        <div class="icon icon-blue">📋</div>
+        <div>
+          <div>Registro de Productos y Precios</div>
+          <small style="color: var(--gray); font-weight: normal;">Historial completo de productos vendidos</small>
+        </div>
+      </div>
+
+      <div class="toolbar">
+        <button class="btn btn-primary" onclick="addRegistryRow()">➕ Agregar Registro</button>
+        <button class="btn btn-success" onclick="exportToExcel()"> Exportar a Excel</button>
+        <button class="btn btn-secondary" onclick="exportRegistryCSV()">📄 Exportar CSV</button>
+        <button class="btn btn-danger" onclick="clearRegistry()">🗑️ Limpiar Todo</button>
+      </div>
+
+      <div class="scroll-table">
+        <table class="data-table" id="registryTable">
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Producto</th>
+              <th style="text-align: center;">Tiempo (min)</th>
+              <th style="text-align: right;">Mano de Obra (S/)</th>
+              <th>Costo Unit. (S/)</th>
+              <th>Precio Venta (S/)</th>
+              <th style="text-align: center;">Cant.</th>
+              <th style="text-align: right;">Ingreso (S/)</th>
+              <th style="text-align: right;">Ganancia (S/)</th>
+              <th>Observación</th>
+              <th style="text-align: center;">Acción</th>
+            </tr>
+          </thead>
+          <tbody id="registryBody"></tbody>
+        </table>
+      </div>
+
+      <div id="registryEmpty" class="empty-state" style="display: none;">
+        <div class="empty-state-icon">📭</div>
+        <h3>No hay registros aún</h3>
+        <p>Comienza agregando tu primer producto vendido</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 5: RESUMEN MENSUAL -->
+  <div id="summary" class="tab-content">
+    <div class="card">
+      <div class="card-title">
+        <div class="icon icon-green">📊</div>
+        <div>
+          <div>Resumen Mensual</div>
+          <small style="color: var(--gray); font-weight: normal;">Análisis de ventas y ganancias por mes</small>
+        </div>
+      </div>
+
+      <div class="summary-total" id="summaryTotal">
+        <div class="item">
+          <div class="item-label">Productos Vendidos</div>
+          <div class="item-value" id="totalProducts">0</div>
+        </div>
+        <div class="item">
+          <div class="item-label">Ventas Totales</div>
+          <div class="item-value" id="totalSales">S/ 0.00</div>
+        </div>
+        <div class="item">
+          <div class="item-label">Costos Totales</div>
+          <div class="item-value" id="totalCosts">S/ 0.00</div>
+        </div>
+        <div class="item">
+          <div class="item-label">Ganancia Total</div>
+          <div class="item-value" id="totalProfit">S/ 0.00</div>
+        </div>
+        <div class="item">
+          <div class="item-label">Margen Promedio</div>
+          <div class="item-value" id="totalMargin">0.0%</div>
+        </div>
+      </div>
+
+      <div class="monthly-grid" id="monthlyGrid"></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- MODAL DE SELECCIÓN DE MATERIALES -->
+<div id="materialSelectorModal" class="modal-overlay">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>📋 Seleccionar Materiales de la Lista</h2>
+      <button class="modal-close" onclick="closeMaterialSelector()">✕</button>
+    </div>
+    
+    <div class="info-box" style="margin-bottom: 20px;">
+      💡 Selecciona los materiales que deseas agregar a la calculadora. Se agregarán con su precio promedio.
+    </div>
+
+    <div id="materialSelectionList" class="material-selection-list">
+      <!-- Se llena dinámicamente -->
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeMaterialSelector()">Cancelar</button>
+      <button class="btn btn-primary" onclick="addSelectedMaterials()">➕ Agregar Seleccionados</button>
+    </div>
+  </div>
+</div>
+
+<div id="notification" class="notification">
+  <span id="notificationIcon">✅</span>
+  <span id="notificationText">Operación exitosa</span>
+</div>
+
+<script>
+  // ============ ESTADO DE LA APLICACIÓN ============
+  let state = {
+    materials: [],
+    materialsList: [],
+    invoices: [],
+    registry: [],
+    calculator: {
+      productName: 'Taza personalizada',
+      productQuantity: 1,
+      hourlyRate: 15.00,
+      workTimeMinutes: 10,
+      laborCost: 2.50,
+      overheadPercent: 10,
+      profitMargin: 30
+    }
+  };
+
+  let currentInvoiceItems = [];
+  let selectedMaterialsForCalculator = [];
+
+  const unitOptions = [
+    { value: 'UND', label: 'UND' },
+    { value: 'PZA', label: 'PZA' },
+    { value: 'CAJ', label: 'CAJ' },
+    { value: 'PKG', label: 'PKG' },
+    { value: 'M', label: 'M' },
+    { value: 'M2', label: 'M2' },
+    { value: 'L', label: 'L' },
+    { value: 'ML', label: 'ML' },
+    { value: 'KG', label: 'KG' },
+    { value: 'GR', label: 'GR' },
+    { value: 'ROLLO', label: 'ROLLO' },
+    { value: 'PLIEGO', label: 'PLIEGO' },
+    { value: 'JGO', label: 'JGO' },
+    { value: 'SET', label: 'SET' },
+    { value: 'OTRO', label: 'OTRO' }
+  ];
+
+  // ============ INICIALIZACIÓN ============
+  document.addEventListener('DOMContentLoaded', () => {
+    loadState();
+    
+    document.getElementById('invoiceDate').value = new Date().toISOString().split('T')[0];
+    
+    if (state.materials.length === 0) {
+      state.materials = [
+        { concept: 'Producto base', unit: 'UND', cost: 2.40, quantity: 1 },
+        { concept: 'Papel sublimación', unit: 'PKG', cost: 0.30, quantity: 1 },
+        { concept: 'Tinta', unit: 'ML', cost: 0.80, quantity: 1 },
+        { concept: 'Cinta térmica', unit: 'M', cost: 0.10, quantity: 1 }
+      ];
+    }
+    
+    if (state.materialsList.length === 0) {
+      state.materialsList = [
+        { name: 'Taza personalizada', unit: 'UND', totalSpent: 0, totalQty: 0, avgPrice: 2.40, lastPrice: 2.40, purchaseCount: 0 },
+        { name: 'Papel sublimación', unit: 'PKG', totalSpent: 0, totalQty: 0, avgPrice: 0.30, lastPrice: 0.30, purchaseCount: 0 },
+        { name: 'Tinta', unit: 'ML', totalSpent: 0, totalQty: 0, avgPrice: 0.80, lastPrice: 0.80, purchaseCount: 0 },
+        { name: 'Cinta térmica', unit: 'M', totalSpent: 0, totalQty: 0, avgPrice: 0.10, lastPrice: 0.10, purchaseCount: 0 }
+      ];
+    }
+    
+    renderMaterials();
+    renderMaterialsList();
+    renderInvoices();
+    renderRegistry();
+    renderSummary();
+    setupEventListeners();
+    calculate();
+    
+    if (currentInvoiceItems.length === 0) {
+      addInvoiceItem();
+    }
+  });
+
+  // ============ EVENT LISTENERS ============
+  function setupEventListeners() {
+    ['productName', 'productQuantity', 'hourlyRate', 'workTimeMinutes', 'overheadPercent', 'profitMargin'].forEach(id => {
+      document.getElementById(id).addEventListener('input', (e) => {
+        state.calculator[id] = e.target.type === 'number' ? parseFloat(e.target.value) || 0 : e.target.value;
+        calculate();
+        saveState();
+      });
+    });
+    
+    document.getElementById('invoiceFreight').addEventListener('input', calculateFreightDistribution);
+  }
+
+  // ============ MODAL DE SELECCIÓN DE MATERIALES ============
+  function openMaterialSelector() {
+    selectedMaterialsForCalculator = [];
+    renderMaterialSelectionList();
+    document.getElementById('materialSelectorModal').classList.add('active');
+  }
+
+  function closeMaterialSelector() {
+    document.getElementById('materialSelectorModal').classList.remove('active');
+    selectedMaterialsForCalculator = [];
+  }
+
+  function renderMaterialSelectionList() {
+    const container = document.getElementById('materialSelectionList');
+    container.innerHTML = '';
+    
+    if (state.materialsList.length === 0) {
+      container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📦</div><h3>No hay materiales en la lista</h3><p>Agrega materiales primero en la pestaña "Lista de Materiales"</p></div>';
+      return;
+    }
+    
+    state.materialsList.forEach((mat, idx) => {
+      const itemDiv = document.createElement('div');
+      itemDiv.className = 'material-selection-item';
+      itemDiv.onclick = () => toggleMaterialSelection(idx, itemDiv);
+      
+      itemDiv.innerHTML = `
+        <input type="checkbox" id="mat-select-${idx}" onchange="event.stopPropagation(); toggleMaterialSelection(${idx}, this.parentElement)">
+        <div class="material-info">
+          <div class="material-name">${mat.name}</div>
+          <div class="material-details">UM: ${mat.unit} | Compras: ${mat.purchaseCount || 0} | Stock: ${mat.totalQty.toFixed(2)} ${mat.unit}</div>
+        </div>
+        <div class="material-price">S/ ${mat.avgPrice.toFixed(2)}</div>
+      `;
+      
+      container.appendChild(itemDiv);
+    });
+  }
+
+  function toggleMaterialSelection(idx, element) {
+    const checkbox = element.querySelector('input[type="checkbox"]');
+    checkbox.checked = !checkbox.checked;
+    
+    if (checkbox.checked) {
+      element.classList.add('selected');
+      if (!selectedMaterialsForCalculator.includes(idx)) {
+        selectedMaterialsForCalculator.push(idx);
+      }
+    } else {
+      element.classList.remove('selected');
+      selectedMaterialsForCalculator = selectedMaterialsForCalculator.filter(i => i !== idx);
+    }
+  }
+
+  function addSelectedMaterials() {
+    if (selectedMaterialsForCalculator.length === 0) {
+      showNotification('Selecciona al menos un material', 'error');
+      return;
+    }
+    
+    selectedMaterialsForCalculator.forEach(idx => {
+      const material = state.materialsList[idx];
+      if (material) {
+        state.materials.push({
+          concept: material.name,
+          unit: material.unit || 'UND',
+          cost: material.avgPrice || 0,
+          quantity: 1
+        });
+      }
+    });
+    
+    renderMaterials();
+    calculate();
+    saveState();
+    closeMaterialSelector();
+    showNotification(`${selectedMaterialsForCalculator.length} material(es) agregado(s)`, 'success');
+  }
+
+  // ============ FACTURAS CON DROPDOWN DE MATERIALES ============
+  function addInvoiceItem() {
+    const itemId = Date.now() + Math.random();
+    const item = {
+      id: itemId,
+      materialName: '',
+      materialId: null,
+      unit: 'UND',
+      quantity: 1,
+      unitPrice: 0,
+      totalPrice: 0,
+      isNewMaterial: false
+    };
+    currentInvoiceItems.push(item);
+    renderInvoiceItems();
+  }
+
+  function removeInvoiceItem(itemId) {
+    if (currentInvoiceItems.length <= 1) {
+      showNotification('Debe haber al menos un item', 'error');
+      return;
+    }
+    currentInvoiceItems = currentInvoiceItems.filter(i => i.id !== itemId);
+    renderInvoiceItems();
+    calculateFreightDistribution();
+  }
+
+  function updateInvoiceItem(itemId, field, value) {
+    const item = currentInvoiceItems.find(i => i.id === itemId);
+    if (item) {
+      item[field] = value;
+      if (field === 'quantity' || field === 'unitPrice') {
+        item.totalPrice = item.quantity * item.unitPrice;
+      }
+      renderInvoiceItems();
+      calculateFreightDistribution();
+    }
+  }
+
+  function selectMaterialFromList(itemId, materialIndex) {
+    const item = currentInvoiceItems.find(i => i.id === itemId);
+    if (!item) return;
+    
+    if (materialIndex === '') {
+      item.materialName = '';
+      item.materialId = null;
+      item.isNewMaterial = false;
+    } else if (materialIndex === 'NEW') {
+      item.materialName = '';
+      item.materialId = null;
+      item.isNewMaterial = true;
+    } else {
+      const idx = parseInt(materialIndex);
+      const material = state.materialsList[idx];
+      if (material) {
+        item.materialName = material.name;
+        item.materialId = idx;
+        item.unit = material.unit || 'UND';
+        item.unitPrice = material.avgPrice || 0;
+        item.totalPrice = item.quantity * item.unitPrice;
+        item.isNewMaterial = false;
+      }
+    }
+    
+    renderInvoiceItems();
+    calculateFreightDistribution();
+  }
+
+  function renderInvoiceItems() {
+    const container = document.getElementById('invoiceItemsContainer');
+    container.innerHTML = '';
+    
+    currentInvoiceItems.forEach((item, index) => {
+      const itemDiv = document.createElement('div');
+      itemDiv.className = 'invoice-item-row';
+      
+      let materialOptionsHTML = `<option value="">-- Seleccionar material --</option>`;
+      
+      state.materialsList.forEach((mat, idx) => {
+        const isSelected = item.materialId === idx && !item.isNewMaterial;
+        const priceHint = mat.avgPrice > 0 ? ` - S/ ${mat.avgPrice.toFixed(2)}/${mat.unit}` : '';
+        materialOptionsHTML += `<option value="${idx}" ${isSelected ? 'selected' : ''}>${mat.name}${priceHint}</option>`;
+      });
+      
+      materialOptionsHTML += `<option value="NEW" ${item.isNewMaterial ? 'selected' : ''}>➕ Escribir nuevo material...</option>`;
+      
+      const unitOptionsHTML = unitOptions.map(u => 
+        `<option value="${u.value}" ${item.unit === u.value ? 'selected' : ''}>${u.value}</option>`
+      ).join('');
+      
+      const materialField = item.isNewMaterial 
+        ? `<input type="text" class="new-material-input" value="${item.materialName}" 
+               onchange="updateInvoiceItem(${item.id}, 'materialName', this.value)"
+               placeholder="✏️ Escribe el nombre del material">`
+        : `<select onchange="selectMaterialFromList(${item.id}, this.value)" 
+                  class="${item.materialId !== null ? 'material-select-highlight' : ''}">
+            ${materialOptionsHTML}
+           </select>`;
+      
+      let priceHint = '';
+      if (item.materialId !== null && !item.isNewMaterial) {
+        const mat = state.materialsList[item.materialId];
+        if (mat) {
+          priceHint = `<div class="price-hint">💰 Precio promedio: S/ ${mat.avgPrice.toFixed(2)}/${mat.unit}</div>`;
+        }
+      }
+      
+      itemDiv.innerHTML = `
+        <div class="form-group">
+          <label>Material ${index + 1}</label>
+          ${materialField}
+          ${priceHint}
+        </div>
+        <div class="form-group">
+          <label>UM</label>
+          <select onchange="updateInvoiceItem(${item.id}, 'unit', this.value)">
+            ${unitOptionsHTML}
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Cantidad</label>
+          <input type="number" min="0.01" step="0.01" value="${item.quantity}"
+                 onchange="updateInvoiceItem(${item.id}, 'quantity', parseFloat(this.value) || 0)">
+        </div>
+        <div class="form-group">
+          <label>Precio Unit. (S/)</label>
+          <input type="number" min="0" step="0.01" value="${item.unitPrice.toFixed(2)}"
+                 onchange="updateInvoiceItem(${item.id}, 'unitPrice', parseFloat(this.value) || 0)">
+        </div>
+        <div class="form-group">
+          <label>Total (S/)</label>
+          <input type="text" value="S/ ${item.totalPrice.toFixed(2)}" readonly 
+                 style="background: #f1f5f9; font-weight: 700; color: var(--primary-dark);">
+        </div>
+        <div>
+          <button class="delete-btn" onclick="removeInvoiceItem(${item.id})" style="margin-bottom: 8px;">🗑️</button>
+        </div>
+      `;
+      container.appendChild(itemDiv);
+    });
+    
+    calculateFreightDistribution();
+  }
+
+  function calculateFreightDistribution() {
+    const freight = parseFloat(document.getElementById('invoiceFreight').value) || 0;
+    const subtotal = currentInvoiceItems.reduce((sum, item) => sum + item.totalPrice, 0);
+    const totalWithFreight = subtotal + freight;
+    
+    const freightSection = document.getElementById('freightSection');
+    const calculationDiv = document.getElementById('freightCalculation');
+    const summaryDiv = document.getElementById('invoiceSummary');
+    
+    if (freight > 0 && currentInvoiceItems.length > 0 && subtotal > 0) {
+      freightSection.style.display = 'block';
+      summaryDiv.style.display = 'block';
+      
+      let html = `
+        <div class="row"><span>Subtotal materiales:</span><span>S/ ${subtotal.toFixed(2)}</span></div>
+        <div class="row"><span>Flete total:</span><span>S/ ${freight.toFixed(2)}</span></div>
+        <div class="row total"><span>Total factura:</span><span>S/ ${totalWithFreight.toFixed(2)}</span></div>
+        <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border);">
+          <strong>Distribución por item:</strong>
+        </div>
+      `;
+      
+      currentInvoiceItems.forEach(item => {
+        const proportion = item.totalPrice / subtotal;
+        const freightAllocated = freight * proportion;
+        const finalUnitCost = (item.totalPrice + freightAllocated) / item.quantity;
+        
+        html += `
+          <div class="row" style="font-size: 0.85rem; margin-top: 5px;">
+            <span>${item.materialName || 'Item sin nombre'} (${item.unit}):</span>
+            <span>S/ ${finalUnitCost.toFixed(2)}/${item.unit}</span>
+          </div>
+        `;
+      });
+      
+      calculationDiv.innerHTML = html;
+      document.getElementById('invoiceTotalWithFreight').textContent = `S/ ${totalWithFreight.toFixed(2)}`;
+    } else {
+      freightSection.style.display = 'none';
+      summaryDiv.style.display = 'none';
+    }
+  }
+
+  function saveInvoice() {
+    const date = document.getElementById('invoiceDate').value;
+    const supplier = document.getElementById('invoiceSupplier').value;
+    const number = document.getElementById('invoiceNumber').value;
+    const freight = parseFloat(document.getElementById('invoiceFreight').value) || 0;
+    
+    if (!date || !supplier) {
+      showNotification('Completa fecha y proveedor', 'error');
+      return;
+    }
+    
+    const validItems = currentInvoiceItems.filter(item => item.materialName && item.quantity > 0 && item.unitPrice > 0);
+    if (validItems.length === 0) {
+      showNotification('Agrega al menos un item válido', 'error');
+      return;
+    }
+    
+    const subtotal = validItems.reduce((sum, item) => sum + item.totalPrice, 0);
+    const totalWithFreight = subtotal + freight;
+    
+    const invoice = {
+      id: Date.now(),
+      date,
+      supplier,
+      number,
+      freight,
+      subtotal,
+      total: totalWithFreight,
+      items: validItems.map(item => {
+        const proportion = item.totalPrice / subtotal;
+        const freightAllocated = freight * proportion;
+        const unitCostWithFreight = (item.totalPrice + freightAllocated) / item.quantity;
+        
+        return {
+          materialName: item.materialName,
+          unit: item.unit,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+          totalPrice: item.totalPrice,
+          freightAllocated: freightAllocated,
+          unitCostWithFreight: unitCostWithFreight,
+          isNewMaterial: item.isNewMaterial || false
+        };
+      })
+    };
+    
+    state.invoices.push(invoice);
+    
+    invoice.items.forEach(invItem => {
+      let material = state.materialsList.find(m => m.name.toLowerCase() === invItem.materialName.toLowerCase());
+      
+      if (!material) {
+        material = {
+          name: invItem.materialName,
+          unit: invItem.unit,
+          totalSpent: 0,
+          totalQty: 0,
+          avgPrice: 0,
+          lastPrice: 0,
+          purchaseCount: 0
+        };
+        state.materialsList.push(material);
+      } else {
+        material.unit = invItem.unit;
+      }
+      
+      material.totalSpent += invItem.totalPrice + invItem.freightAllocated;
+      material.totalQty += invItem.quantity;
+      material.avgPrice = material.totalSpent / material.totalQty;
+      material.lastPrice = invItem.unitCostWithFreight;
+      material.purchaseCount = (material.purchaseCount || 0) + 1;
+    });
+    
+    renderInvoices();
+    renderMaterialsList();
+    clearInvoiceForm();
+    saveState();
+    showNotification('Factura registrada exitosamente', 'success');
+  }
+
+  function renderInvoices() {
+    const tbody = document.getElementById('invoiceBody');
+    const empty = document.getElementById('invoiceEmpty');
+    
+    if (state.invoices.length === 0) {
+      tbody.innerHTML = '';
+      empty.style.display = 'block';
+      return;
+    }
+    
+    empty.style.display = 'none';
+    tbody.innerHTML = '';
+    
+    state.invoices.forEach((inv, idx) => {
+      const itemsList = inv.items.map(i => `${i.materialName} (${i.unit} x${i.quantity})`).join(', ');
+      tbody.innerHTML += `
+        <tr>
+          <td>${inv.date}</td>
+          <td>${inv.supplier}</td>
+          <td>${inv.number || '-'}</td>
+          <td><small>${itemsList}</small></td>
+          <td style="text-align: right;">S/ ${inv.subtotal.toFixed(2)}</td>
+          <td style="text-align: right;">S/ ${inv.freight.toFixed(2)}</td>
+          <td style="text-align: right; font-weight: 700; color: var(--primary-dark);">S/ ${inv.total.toFixed(2)}</td>
+          <td style="text-align: center;"><button class="delete-btn" onclick="removeInvoice(${idx})">️</button></td>
+        </tr>
+      `;
+    });
+  }
+
+  function removeInvoice(idx) {
+    if (confirm('¿Eliminar esta factura? Se recalcularán los promedios.')) {
+      const inv = state.invoices[idx];
+      
+      inv.items.forEach(invItem => {
+        const material = state.materialsList.find(m => m.name.toLowerCase() === invItem.materialName.toLowerCase());
+        if (material) {
+          material.totalSpent -= (invItem.totalPrice + invItem.freightAllocated);
+          material.totalQty -= invItem.quantity;
+          material.purchaseCount = Math.max(0, (material.purchaseCount || 1) - 1);
+          
+          if (material.totalQty > 0) {
+            material.avgPrice = material.totalSpent / material.totalQty;
+          } else {
+            material.avgPrice = 0;
+          }
+        }
+      });
+      
+      state.invoices.splice(idx, 1);
+      renderInvoices();
+      renderMaterialsList();
+      saveState();
+      showNotification('Factura eliminada', 'success');
+    }
+  }
+
+  function clearInvoiceForm() {
+    document.getElementById('invoiceDate').value = new Date().toISOString().split('T')[0];
+    document.getElementById('invoiceSupplier').value = '';
+    document.getElementById('invoiceNumber').value = '';
+    document.getElementById('invoiceFreight').value = '0';
+    currentInvoiceItems = [];
+    addInvoiceItem();
+    calculateFreightDistribution();
+  }
+
+  // ============ LISTA MAESTRA DE MATERIALES ============
+  function renderMaterialsList() {
+    const tbody = document.getElementById('materialsListBody');
+    const empty = document.getElementById('materialsEmpty');
+    
+    if (state.materialsList.length === 0) {
+      tbody.innerHTML = '';
+      empty.style.display = 'block';
+      return;
+    }
+    
+    empty.style.display = 'none';
+    tbody.innerHTML = '';
+    
+    state.materialsList.forEach((mat, idx) => {
+      tbody.innerHTML += `
+        <tr>
+          <td><strong>${mat.name}</strong></td>
+          <td style="text-align: center;"><span class="unit-badge">${mat.unit || 'UND'}</span></td>
+          <td style="text-align: right;">S/ ${mat.totalSpent.toFixed(2)}</td>
+          <td style="text-align: center;">${mat.totalQty.toFixed(2)} ${mat.unit || 'UND'}</td>
+          <td style="text-align: right; font-weight: 700; color: var(--primary-dark);">S/ ${mat.avgPrice.toFixed(2)}</td>
+          <td style="text-align: right;">S/ ${mat.lastPrice.toFixed(2)}</td>
+          <td style="text-align: center;">${mat.purchaseCount || 0}</td>
+          <td style="text-align: center;">
+            ${mat.totalQty === 0 && (mat.purchaseCount || 0) === 0 ? `<button class="delete-btn" onclick="removeMaterialFromList(${idx})">🗑️</button>` : ''}
+          </td>
+        </tr>
+      `;
+    });
+  }
+
+  function addNewMaterial() {
+    const name = document.getElementById('newMaterialName').value.trim();
+    const unit = document.getElementById('newMaterialUnit').value;
+    
+    if (!name) {
+      showNotification('Ingresa un nombre para el material', 'error');
+      return;
+    }
+    
+    if (state.materialsList.find(m => m.name.toLowerCase() === name.toLowerCase())) {
+      showNotification('Este material ya existe', 'error');
+      return;
+    }
+    
+    state.materialsList.push({
+      name,
+      unit,
+      totalSpent: 0,
+      totalQty: 0,
+      avgPrice: 0,
+      lastPrice: 0,
+      purchaseCount: 0
+    });
+    
+    document.getElementById('newMaterialName').value = '';
+    renderMaterialsList();
+    saveState();
+    showNotification('Material agregado a la lista maestra', 'success');
+  }
+
+  function removeMaterialFromList(idx) {
+    if (confirm('¿Eliminar este material de la lista?')) {
+      state.materialsList.splice(idx, 1);
+      renderMaterialsList();
+      saveState();
+      showNotification('Material eliminado', 'success');
+    }
+  }
+
+  // ============ CALCULADORA ============
+  function renderMaterials() {
+    const tbody = document.getElementById('materialsBody');
+    tbody.innerHTML = '';
+    state.materials.forEach((mat, idx) => {
+      const total = (mat.cost * mat.quantity).toFixed(2);
+      const unit = mat.unit || 'UND';
+      
+      const unitOptionsHTML = unitOptions.map(u => 
+        `<option value="${u.value}" ${unit === u.value ? 'selected' : ''}>${u.value}</option>`
+      ).join('');
+      
+      tbody.innerHTML += `
+        <tr>
+          <td><input type="text" value="${mat.concept}" onchange="updateMaterial(${idx}, 'concept', this.value)"></td>
+          <td>
+            <select onchange="updateMaterial(${idx}, 'unit', this.value)">
+              ${unitOptionsHTML}
+            </select>
+          </td>
+          <td><input type="number" step="0.01" min="0" value="${mat.cost.toFixed(2)}" onchange="updateMaterial(${idx}, 'cost', parseFloat(this.value) || 0)"></td>
+          <td><input type="number" step="0.01" min="0" value="${mat.quantity}" onchange="updateMaterial(${idx}, 'quantity', parseFloat(this.value) || 0)"></td>
+          <td class="total-cell">S/ ${total}</td>
+          <td><button class="delete-btn" onclick="removeMaterial(${idx})">🗑️</button></td>
+        </tr>
+      `;
+    });
+  }
+
+  function addMaterial() {
+    state.materials.push({ concept: 'Nuevo material', unit: 'UND', cost: 0, quantity: 1 });
+    renderMaterials();
+    calculate();
+    saveState();
+    showNotification('Material agregado', 'success');
+  }
+
+  function removeMaterial(idx) {
+    state.materials.splice(idx, 1);
+    renderMaterials();
+    calculate();
+    saveState();
+  }
+
+  function updateMaterial(idx, field, value) {
+    state.materials[idx][field] = value;
+    calculate();
+    saveState();
+    renderMaterials();
+  }
+
+  function calculate() {
+    const hourlyRate = parseFloat(state.calculator.hourlyRate) || 0;
+    const workTimeMinutes = parseFloat(state.calculator.workTimeMinutes) || 0;
+    const laborCost = (hourlyRate * workTimeMinutes) / 60;
+    
+    state.calculator.laborCost = laborCost;
+    
+    document.getElementById('formulaHourly').textContent = hourlyRate.toFixed(2);
+    document.getElementById('formulaMinutes').textContent = workTimeMinutes;
+    document.getElementById('laborCostCalculated').textContent = laborCost.toFixed(2);
+    
+    const subtotalMaterials = state.materials.reduce((sum, m) => sum + (m.cost * m.quantity), 0);
+    const overheadPercent = parseFloat(state.calculator.overheadPercent) || 0;
+    const overheadCost = subtotalMaterials * (overheadPercent / 100);
+    const totalCost = subtotalMaterials + laborCost + overheadCost;
+    const profitMargin = parseFloat(state.calculator.profitMargin) || 0;
+    const suggestedPrice = totalCost / (1 - profitMargin / 100);
+    const profitPerUnit = suggestedPrice - totalCost;
+    
+    document.getElementById('subtotalMaterials').textContent = `S/ ${subtotalMaterials.toFixed(2)}`;
+    document.getElementById('totalCost').textContent = `S/ ${totalCost.toFixed(2)}`;
+    document.getElementById('overheadCost').textContent = `S/ ${overheadCost.toFixed(2)}`;
+    document.getElementById('overheadPercentDisplay').textContent = `${overheadPercent}% sobre materiales`;
+    document.getElementById('suggestedPrice').textContent = `S/ ${suggestedPrice.toFixed(2)}`;
+    document.getElementById('profitPerUnit').textContent = `S/ ${profitPerUnit.toFixed(2)}`;
+    document.getElementById('profitMarginDisplay').textContent = `${profitMargin}% de margen`;
+    
+    state.calculator.subtotalMaterials = subtotalMaterials;
+    state.calculator.overheadCost = overheadCost;
+    state.calculator.totalCost = totalCost;
+    state.calculator.suggestedPrice = suggestedPrice;
+    state.calculator.profitPerUnit = profitPerUnit;
+  }
+
+  function clearCalculator() {
+    if (confirm('¿Limpiar todos los datos de la calculadora?')) {
+      state.materials = [];
+      state.calculator = {
+        productName: '',
+        productQuantity: 1,
+        hourlyRate: 15.00,
+        workTimeMinutes: 10,
+        laborCost: 2.50,
+        overheadPercent: 10,
+        profitMargin: 30
+      };
+      document.getElementById('productName').value = '';
+      document.getElementById('productQuantity').value = 1;
+      document.getElementById('hourlyRate').value = 15.00;
+      document.getElementById('workTimeMinutes').value = 10;
+      document.getElementById('overheadPercent').value = 10;
+      document.getElementById('profitMargin').value = 30;
+      renderMaterials();
+      calculate();
+      saveState();
+      showNotification('Calculadora limpiada', 'success');
+    }
+  }
+
+  // ============ REGISTRO ============
+  function renderRegistry() {
+    const tbody = document.getElementById('registryBody');
+    const emptyState = document.getElementById('registryEmpty');
+    
+    if (state.registry.length === 0) {
+      tbody.innerHTML = '';
+      emptyState.style.display = 'block';
+      return;
+    }
+    
+    emptyState.style.display = 'none';
+    tbody.innerHTML = '';
+    
+    state.registry.forEach((item, idx) => {
+      const income = (item.price * item.quantity).toFixed(2);
+      const profit = ((item.price - item.cost) * item.quantity).toFixed(2);
+      const profitClass = profit >= 0 ? 'profit-positive' : 'profit-negative';
+      
+      const time = item.workTimeMinutes || item.time || 0;
+      const labor = item.laborCost || 0;
+
+      tbody.innerHTML += `
+        <tr>
+          <td><input type="date" value="${item.date}" onchange="updateRegistry(${idx}, 'date', this.value)"></td>
+          <td><input type="text" value="${item.product}" onchange="updateRegistry(${idx}, 'product', this.value)"></td>
+          <td style="text-align: center; font-weight: 600; color: var(--dark);">${time}</td>
+          <td style="text-align: right; font-weight: 600; color: var(--primary-dark);">S/ ${labor.toFixed(2)}</td>
+          <td><input type="number" step="0.01" min="0" value="${item.cost}" onchange="updateRegistry(${idx}, 'cost', parseFloat(this.value) || 0)"></td>
+          <td><input type="number" step="0.01" min="0" value="${item.price}" onchange="updateRegistry(${idx}, 'price', parseFloat(this.value) || 0)"></td>
+          <td style="text-align: center;"><input type="number" min="0" value="${item.quantity}" onchange="updateRegistry(${idx}, 'quantity', parseInt(this.value) || 0)" style="text-align: center;"></td>
+          <td style="text-align: right; font-weight: 700;">S/ ${income}</td>
+          <td class="${profitClass}" style="text-align: right;">S/ ${profit}</td>
+          <td><input type="text" value="${item.observation || ''}" onchange="updateRegistry(${idx}, 'observation', this.value)"></td>
+          <td style="text-align: center;"><button class="delete-btn" onclick="removeRegistry(${idx})">🗑️</button></td>
+        </tr>
+      `;
+    });
+  }
+
+  function addRegistryRow() {
+    const today = new Date().toISOString().split('T')[0];
+    state.registry.push({
+      date: today,
+      product: state.calculator.productName || 'Nuevo producto',
+      cost: state.calculator.totalCost || 0,
+      price: state.calculator.suggestedPrice || 0,
+      quantity: 1,
+      observation: '',
+      workTimeMinutes: state.calculator.workTimeMinutes || 0,
+      laborCost: state.calculator.laborCost || 0
+    });
+    renderRegistry();
+    renderSummary();
+    saveState();
+    showNotification('Registro agregado', 'success');
+  }
+
+  function saveToRegistry() {
+    const today = new Date().toISOString().split('T')[0];
+    if (!state.calculator.productName || state.calculator.totalCost === 0) {
+      showNotification('Completa los datos primero', 'error');
+      return;
+    }
+    state.registry.push({
+      date: today,
+      product: state.calculator.productName,
+      cost: state.calculator.totalCost,
+      price: state.calculator.suggestedPrice,
+      quantity: parseInt(state.calculator.productQuantity) || 1,
+      observation: 'Guardado desde calculadora',
+      workTimeMinutes: state.calculator.workTimeMinutes || 0,
+      laborCost: state.calculator.laborCost || 0
+    });
+    renderRegistry();
+    renderSummary();
+    saveState();
+    showNotification('Guardado en registro exitosamente', 'success');
+    switchTab('registry', document.querySelectorAll('.tab')[3]);
+  }
+
+  function updateRegistry(idx, field, value) {
+    state.registry[idx][field] = value;
+    renderRegistry();
+    renderSummary();
+    saveState();
+  }
+
+  function removeRegistry(idx) {
+    if (confirm('¿Eliminar este registro?')) {
+      state.registry.splice(idx, 1);
+      renderRegistry();
+      renderSummary();
+      saveState();
+      showNotification('Registro eliminado', 'success');
+    }
+  }
+
+  function clearRegistry() {
+    if (confirm('¿Eliminar TODOS los registros? Esta acción no se puede deshacer.')) {
+      state.registry = [];
+      renderRegistry();
+      renderSummary();
+      saveState();
+      showNotification('Registros eliminados', 'success');
+    }
+  }
+
+  // ============ RESUMEN MENSUAL ============
+  function renderSummary() {
+    const months = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+                    'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+    
+    const monthlyData = {};
+    months.forEach((m, i) => {
+      monthlyData[i] = { products: 0, sales: 0, costs: 0, profit: 0 };
+    });
+    
+    state.registry.forEach(item => {
+      if (!item.date) return;
+      const date = new Date(item.date);
+      const month = date.getMonth();
+      const income = item.price * item.quantity;
+      const cost = item.cost * item.quantity;
+      const profit = income - cost;
+      
+      monthlyData[month].products += item.quantity;
+      monthlyData[month].sales += income;
+      monthlyData[month].costs += cost;
+      monthlyData[month].profit += profit;
+    });
+    
+    const grid = document.getElementById('monthlyGrid');
+    grid.innerHTML = '';
+    
+    months.forEach((month, idx) => {
+      const data = monthlyData[idx];
+      const margin = data.sales > 0 ? ((data.profit / data.sales) * 100).toFixed(1) : 0;
+      const hasData = data.products > 0;
+      
+      grid.innerHTML += `
+        <div class="monthly-card ${hasData ? 'has-data' : ''}">
+          <div class="month-name">${month}</div>
+          <div class="stats">
+            <div class="stat-item">
+              <span class="stat-label">Productos</span>
+              <span class="stat-value">${data.products}</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">Ventas</span>
+              <span class="stat-value">S/ ${data.sales.toFixed(2)}</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">Costos</span>
+              <span class="stat-value">S/ ${data.costs.toFixed(2)}</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">Ganancia</span>
+              <span class="stat-value ${data.profit >= 0 ? 'positive' : ''}">S/ ${data.profit.toFixed(2)}</span>
+            </div>
+            <div class="stat-item" style="grid-column: span 2;">
+              <span class="stat-label">Margen Real</span>
+              <span class="stat-value">${margin}%</span>
+            </div>
+          </div>
+        </div>
+      `;
+    });
+    
+    const totals = Object.values(monthlyData).reduce((acc, m) => ({
+      products: acc.products + m.products,
+      sales: acc.sales + m.sales,
+      costs: acc.costs + m.costs,
+      profit: acc.profit + m.profit
+    }), { products: 0, sales: 0, costs: 0, profit: 0 });
+    
+    const totalMargin = totals.sales > 0 ? ((totals.profit / totals.sales) * 100).toFixed(1) : 0;
+    
+    document.getElementById('totalProducts').textContent = totals.products;
+    document.getElementById('totalSales').textContent = `S/ ${totals.sales.toFixed(2)}`;
+    document.getElementById('totalCosts').textContent = `S/ ${totals.costs.toFixed(2)}`;
+    document.getElementById('totalProfit').textContent = `S/ ${totals.profit.toFixed(2)}`;
+    document.getElementById('totalMargin').textContent = `${totalMargin}%`;
+  }
+
+  // ============ EXPORTAR A EXCEL ============
+  function exportToExcel() {
+    if (state.registry.length === 0) {
+      showNotification('No hay registros para exportar', 'error');
+      return;
+    }
+
+    if (typeof XLSX === 'undefined') {
+      showNotification('Error: Librería Excel no cargada.', 'error');
+      return;
+    }
+
+    const wb = XLSX.utils.book_new();
+    const aoa = [];
+    
+    aoa.push(['LISTA DE PRECIOS – SUBLIMACIÓN']);
+    aoa.push(['Aquí defines el costo de cada producto. Las columnas verdes se calculan solas.']);
+    aoa.push([
+      'Producto', 'Producto base', 'Papel', 'Tinta', 'Cinta', 'Empaque', 'Otros',
+      'Tiempo trabajo (min)', 'Mano de obra', 'Gastos generales %', 'COSTO TOTAL', 'Margen %', 'PRECIO VENTA', 'GANANCIA'
+    ]);
+    
+    state.registry.forEach((item) => {
+      const materials = state.materials || [];
+      const matValues = [0, 0, 0, 0, 0, 0];
+      materials.forEach((mat, idx) => {
+        if (idx < 6) matValues[idx] = parseFloat((mat.cost * mat.quantity).toFixed(2));
+      });
+      
+      const materialsCost = matValues.reduce((sum, v) => sum + v, 0);
+      const laborCost = item.laborCost || ((state.calculator.hourlyRate || 15) * (item.workTimeMinutes || 10)) / 60;
+      const overheadPercent = state.calculator.overheadPercent || 10;
+      const overheadCost = materialsCost * (overheadPercent / 100);
+      const totalCost = materialsCost + laborCost + overheadCost;
+      const income = item.price * item.quantity;
+      const profit = income - (totalCost * item.quantity);
+      const margin = item.price > 0 ? ((item.price - totalCost) / item.price * 100) : 0;
+      const workTime = item.workTimeMinutes || state.calculator.workTimeMinutes || 10;
+
+      aoa.push([
+        item.product || '', matValues[0], matValues[1], matValues[2], matValues[3], matValues[4], matValues[5],
+        workTime, parseFloat(laborCost.toFixed(2)), overheadPercent, parseFloat(totalCost.toFixed(2)),
+        parseFloat(margin.toFixed(0)), parseFloat(item.price.toFixed(2)), parseFloat(profit.toFixed(2))
+      ]);
+    });
+
+    const ws = XLSX.utils.aoa_to_sheet(aoa);
+
+    ws['!merges'] = [
+      { s: { r: 0, c: 0 }, e: { r: 0, c: 13 } },
+      { s: { r: 1, c: 0 }, e: { r: 1, c: 13 } }
+    ];
+
+    ws['!cols'] = [
+      { wch: 28 }, { wch: 14 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 12 }, { wch: 10 },
+      { wch: 20 }, { wch: 14 }, { wch: 18 }, { wch: 14 }, { wch: 12 }, { wch: 14 }, { wch: 14 }
+    ];
+
+    ws['!rows'] = [ { hpt: 30 }, { hpt: 20 }, { hpt: 35 } ];
+
+    const range = XLSX.utils.decode_range(ws['!ref']);
+    
+    for (let R = range.s.r; R <= range.e.r; ++R) {
+      for (let C = range.s.c; C <= range.e.c; ++C) {
+        const cellAddress = XLSX.utils.encode_cell({ r: R, c: C });
+        const cell = ws[cellAddress];
+        if (!cell) continue;
+
+        if (R === 0) {
+          cell.s = {
+            font: { bold: true, sz: 16, color: { rgb: 'FFFFFF' }, name: 'Calibri' },
+            fill: { fgColor: { rgb: '1E3A8A' } },
+            alignment: { horizontal: 'center', vertical: 'center' },
+            border: { top: { style: 'thin', color: { rgb: '000000' } }, bottom: { style: 'thin', color: { rgb: '000000' } }, left: { style: 'thin', color: { rgb: '000000' } }, right: { style: 'thin', color: { rgb: '000000' } } }
+          };
+        } else if (R === 1) {
+          cell.s = {
+            font: { italic: true, sz: 11, color: { rgb: '64748B' }, name: 'Calibri' },
+            alignment: { horizontal: 'left', vertical: 'center' }
+          };
+        } else if (R === 2) {
+          cell.s = {
+            font: { bold: true, sz: 11, color: { rgb: 'FFFFFF' }, name: 'Calibri' },
+            fill: { fgColor: { rgb: '1E40AF' } },
+            alignment: { horizontal: 'center', vertical: 'center', wrapText: true },
+            border: { top: { style: 'thin', color: { rgb: '000000' } }, bottom: { style: 'thin', color: { rgb: '000000' } }, left: { style: 'thin', color: { rgb: '000000' } }, right: { style: 'thin', color: { rgb: '000000' } } }
+          };
+        } else {
+          const baseStyle = {
+            font: { sz: 10, name: 'Calibri' },
+            alignment: { vertical: 'center' },
+            border: { top: { style: 'thin', color: { rgb: 'D1D5DB' } }, bottom: { style: 'thin', color: { rgb: 'D1D5DB' } }, left: { style: 'thin', color: { rgb: 'D1D5DB' } }, right: { style: 'thin', color: { rgb: 'D1D5DB' } } }
+          };
+
+          if (C === 0) {
+            cell.s = { ...baseStyle, alignment: { horizontal: 'left', vertical: 'center' } };
+          } else if (C >= 1 && C <= 6) {
+            cell.s = { ...baseStyle, fill: { fgColor: { rgb: 'FEF3C7' } }, alignment: { horizontal: 'right', vertical: 'center' }, numFmt: '#,##0.00' };
+          } else if (C === 7) {
+            cell.s = { ...baseStyle, alignment: { horizontal: 'center', vertical: 'center' } };
+          } else if (C === 8) {
+            cell.s = { ...baseStyle, fill: { fgColor: { rgb: 'FEF3C7' } }, alignment: { horizontal: 'right', vertical: 'center' }, numFmt: '#,##0.00' };
+          } else if (C === 9) {
+            cell.s = { ...baseStyle, alignment: { horizontal: 'center', vertical: 'center' } };
+          } else if (C === 10) {
+            cell.s = { ...baseStyle, font: { sz: 10, bold: true, name: 'Calibri' }, fill: { fgColor: { rgb: 'D1FAE5' } }, alignment: { horizontal: 'right', vertical: 'center' }, numFmt: '#,##0.00' };
+          } else if (C === 11) {
+            cell.s = { ...baseStyle, font: { sz: 10, bold: true, name: 'Calibri' }, fill: { fgColor: { rgb: 'D1FAE5' } }, alignment: { horizontal: 'right', vertical: 'center' } };
+          } else if (C === 12) {
+            cell.s = { ...baseStyle, font: { sz: 10, bold: true, name: 'Calibri' }, fill: { fgColor: { rgb: 'BBF7D0' } }, alignment: { horizontal: 'right', vertical: 'center' }, numFmt: '#,##0.00' };
+          } else if (C === 13) {
+            cell.s = { ...baseStyle, font: { sz: 10, bold: true, name: 'Calibri' }, fill: { fgColor: { rgb: 'BBF7D0' } }, alignment: { horizontal: 'right', vertical: 'center' }, numFmt: '#,##0.00' };
+          }
+        }
+      }
+    }
+
+    XLSX.utils.book_append_sheet(wb, ws, 'Lista de Precios');
+    const fileName = `lista_precios_sublimacion_${new Date().toISOString().split('T')[0]}.xlsx`;
+    XLSX.writeFile(wb, fileName);
+    showNotification('Excel exportado exitosamente', 'success');
+  }
+
+  // ============ NAVEGACIÓN ============
+  function switchTab(tabId, btn) {
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.getElementById(tabId).classList.add('active');
+    btn.classList.add('active');
+    if (tabId === 'summary') renderSummary();
+    if (tabId === 'invoices') renderInvoiceItems();
+  }
+
+  // ============ PERSISTENCIA ============
+  function saveState() {
+    try {
+      localStorage.setItem('sublimacionApp_v5', JSON.stringify(state));
+    } catch (e) {
+      console.error('Error al guardar:', e);
+    }
+  }
+
+  function loadState() {
+    try {
+      const saved = localStorage.getItem('sublimacionApp_v5');
+      if (saved) {
+        state = JSON.parse(saved);
+        document.getElementById('productName').value = state.calculator.productName || '';
+        document.getElementById('productQuantity').value = state.calculator.productQuantity || 1;
+        document.getElementById('hourlyRate').value = state.calculator.hourlyRate || 15.00;
+        document.getElementById('workTimeMinutes').value = state.calculator.workTimeMinutes || 10;
+        document.getElementById('overheadPercent').value = state.calculator.overheadPercent || 10;
+        document.getElementById('profitMargin').value = state.calculator.profitMargin || 30;
+      }
+    } catch (e) {
+      console.error('Error al cargar:', e);
+    }
+  }
+
+  // ============ EXPORTAR / IMPORTAR ============
+  function exportData() {
+    const dataStr = JSON.stringify(state, null, 2);
+    const blob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `sublimacion_backup_${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showNotification('Datos exportados', 'success');
+  }
+
+  function importData() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    input.onchange = (e) => {
+      const file = e.target.files[0];
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try {
+          state = JSON.parse(event.target.result);
+          saveState();
+          location.reload();
+        } catch (err) {
+          showNotification('Archivo inválido', 'error');
+        }
+      };
+      reader.readAsText(file);
+    };
+    input.click();
+  }
+
+  function exportRegistryCSV() {
+    if (state.registry.length === 0) {
+      showNotification('No hay registros para exportar', 'error');
+      return;
+    }
+    let csv = 'Fecha,Producto,Tiempo(min),Mano de Obra(S/),Costo Unitario,Precio Venta,Cantidad,Ingreso,Ganancia,Observación\n';
+    state.registry.forEach(item => {
+      const income = (item.price * item.quantity).toFixed(2);
+      const profit = ((item.price - item.cost) * item.quantity).toFixed(2);
+      const time = item.workTimeMinutes || item.time || 0;
+      const labor = item.laborCost || 0;
+      csv += `${item.date},"${item.product}",${time},${labor.toFixed(2)},${item.cost},${item.price},${item.quantity},${income},${profit},"${item.observation || ''}"\n`;
+    });
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `registro_sublimacion_${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showNotification('CSV exportado', 'success');
+  }
+
+  function resetAll() {
+    if (confirm('⚠️ ¿Reiniciar TODA la aplicación? Se perderán todos los datos.')) {
+      if (confirm('Esta acción es IRREVERSIBLE. ¿Continuar?')) {
+        localStorage.removeItem('sublimacionApp_v5');
+        location.reload();
+      }
+    }
+  }
+
+  // ============ NOTIFICACIONES ============
+  function showNotification(message, type = 'success') {
+    const notif = document.getElementById('notification');
+    const icon = document.getElementById('notificationIcon');
+    const text = document.getElementById('notificationText');
+    
+    text.textContent = message;
+    icon.textContent = type === 'success' ? '✅' : '❌';
+    notif.classList.remove('error');
+    if (type === 'error') notif.classList.add('error');
+    
+    notif.classList.add('show');
+    setTimeout(() => notif.classList.remove('show'), 3000);
+  }
+</script>
+
+</body>
+</html>
